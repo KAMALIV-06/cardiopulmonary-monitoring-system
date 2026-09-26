@@ -4,6 +4,7 @@ from app.data_sources.simulator_adapter import SimulatorAdapter
 from app.data_sources.hardware_adapter import HardwareAdapter
 from app.data_sources.dataset_adapter import DatasetAdapter
 from app.schemas.hardware import HardwarePayload
+from app.main import app
 
 def test_simulator_adapter_normalization():
     adapter = SimulatorAdapter()
@@ -55,6 +56,11 @@ def test_hardware_adapter_unavailable_sensor():
     assert isinstance(vital, VitalData)
     assert vital.source == "hardware"
     assert vital.signal_quality <= 0.1
+
+
+def test_existing_hardware_ingest_route_remains_registered():
+    operation = app.openapi()["paths"]["/api/v1/ingest/hardware"]
+    assert "post" in operation
 
 def test_dataset_adapter_normalization():
     adapter = DatasetAdapter()

@@ -11,7 +11,6 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({ risk }) => {
   const score = risk.risk_score;
   const level = risk.risk_level;
   const anomalies = risk.anomalies;
-  const recommendations = risk.recommendations;
 
   // Styling based on risk level
   const configurations: Record<RiskLevel, { color: string; bg: string; border: string; bar: string; icon: React.ElementType; badge: string }> = {
@@ -60,7 +59,7 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({ risk }) => {
         </div>
 
         <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${config.badge}`}>
-          {level} RISK
+          {level === 'HIGH_RISK' ? 'HIGH RISK' : level}
         </span>
       </div>
 
@@ -88,7 +87,7 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({ risk }) => {
       {/* Anomaly Detection List */}
       <div className="mb-4">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
-          <span>Active Diagnostic Findings</span>
+          <span>Risk factors for clinical review</span>
         </h4>
         <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
           {anomalies.map((anomaly, idx) => (
@@ -108,7 +107,7 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({ risk }) => {
         <Stethoscope className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
         <div className="text-xs text-slate-300">
           <span className="font-semibold text-white">Suggested Action: </span>
-          {recommendations[0] || 'Continue routine telemetry.'}
+          {risk.suggested_action || 'Continue monitoring and review the trend.'}
         </div>
       </div>
     </div>

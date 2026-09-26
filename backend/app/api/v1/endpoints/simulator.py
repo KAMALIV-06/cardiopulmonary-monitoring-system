@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 router = APIRouter()
 
 class ScenarioChangeRequest(BaseModel):
-    scenario: str = Field(..., example="hypoxemia")
+    scenario: str = Field(..., json_schema_extra={"example": "hypoxemia"})
     patient_id: str = Field(default="PATIENT-001")
 
 # Reference to simulator controller (wired in main.py via register_sim_controller)

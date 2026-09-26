@@ -11,5 +11,9 @@ class RiskAnalysisResult(BaseModel):
     contributing_factors: List[str] = Field(default_factory=list)
     anomalies: List[str] = Field(default_factory=list, description="Specific identified clinical anomalies")
     recommendations: List[str] = Field(default_factory=list, description="Immediate clinical recommendations")
+    suggested_action: str = Field(
+        default="Continue monitoring and review trends.",
+        description="Action derived from the highest-severity active finding; not a diagnosis.",
+    )
     hrv_metrics: Optional[Dict[str, float]] = Field(default_factory=dict, description="SDNN, RMSSD, RR-Interval")
     signal_sqi: float = Field(default=1.0, description="Signal Quality Index of the analysis window")

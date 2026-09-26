@@ -35,6 +35,13 @@ class VitalData(BaseModel):
     def round_values(cls, v: float) -> float:
         return round(float(v), 1)
 
+    @field_validator("timestamp")
+    @classmethod
+    def normalize_timestamp_utc(cls, value: datetime.datetime) -> datetime.datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=datetime.timezone.utc)
+        return value.astimezone(datetime.timezone.utc)
+
 class VitalReadingOut(VitalData):
     id: Optional[int] = None
     risk_score: float = 0.0

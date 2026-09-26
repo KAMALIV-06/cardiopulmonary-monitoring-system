@@ -10,5 +10,5 @@ class Device(Base):
     device_type = Column(String(32), default="simulator")  # "simulator", "hardware", "dataset"
     mac_address = Column(String(32), nullable=True)
     status = Column(String(16), default="active")  # "active", "offline", "degraded"
-    last_seen = Column(DateTime, default=datetime.datetime.utcnow)
+    last_seen = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     vital_readings = relationship("VitalReading", back_populates="device")

@@ -29,7 +29,7 @@ class HardwareAdapter(BaseDataSourceAdapter):
         return VitalData(
             patient_id=payload.patient_id,
             device_id=payload.device_id,
-            timestamp=payload.timestamp or datetime.datetime.utcnow(),
+            timestamp=payload.timestamp or datetime.datetime.now(datetime.timezone.utc),
             heart_rate=payload.heart_rate,
             spo2=payload.spo2,
             respiratory_rate=rr,

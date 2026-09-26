@@ -34,6 +34,7 @@ export function useVitalsWebSocket({
     };
 
     ws.onmessage = (event) => {
+      if (wsRef.current !== ws) return;
       try {
         const packet: TelemetryPacket = JSON.parse(event.data);
         if (packet.type === 'VITAL_UPDATE') {
@@ -65,6 +66,8 @@ export function useVitalsWebSocket({
     };
 
     ws.onclose = () => {
+      if (wsRef.current !== ws) return;
+      wsRef.current = null;
       setIsConnected(false);
       console.log('WebSocket disconnected, reconnecting in 2s...');
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -79,6 +82,11 @@ export function useVitalsWebSocket({
   }, [patientId, maxPpgPoints]);
 
   useEffect(() => {
+    setIsConnected(false);
+    setCurrentVital(null);
+    setCurrentRisk(null);
+    setActiveAlerts([]);
+    setPpgBuffer([]);
     connect();
 
     // Heartbeat ping loop
@@ -91,9 +99,9 @@ export function useVitalsWebSocket({
     return () => {
       clearInterval(pingInterval);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      const socket = wsRef.current;
+      wsRef.current = null;
+      if (socket) socket.close();
     };
   }, [connect]);
 

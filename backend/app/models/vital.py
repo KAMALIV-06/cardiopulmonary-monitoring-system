@@ -9,7 +9,7 @@ class VitalReading(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     patient_id = Column(String(64), ForeignKey("patients.id"), nullable=False, index=True)
     device_id = Column(String(64), ForeignKey("devices.id"), nullable=False)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), index=True)
     
     # Normalized Core Vitals
     heart_rate = Column(Float, nullable=False)
@@ -26,6 +26,7 @@ class VitalReading(Base):
     
     patient = relationship("Patient", back_populates="vital_readings")
     device = relationship("Device", back_populates="vital_readings")
+    alerts = relationship("ClinicalAlert", back_populates="vital_reading")
 
     __table_args__ = (
         Index("idx_patient_timestamp", "patient_id", "timestamp"),

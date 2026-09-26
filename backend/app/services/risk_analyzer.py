@@ -33,21 +33,21 @@ class BaselineRiskModel:
             pass  # Leads off / no signal — handled by SQI check
         elif hr <= 40:
             raw_score += 3
-            contributing_factors.append("Severe bradycardia (HR ≤ 40 bpm)")
+            contributing_factors.append("Very low heart-rate measurement (≤ 40 bpm)")
         elif hr <= 50:
             raw_score += 1
-            contributing_factors.append("Mild bradycardia (HR 41–50 bpm)")
+            contributing_factors.append("Low heart-rate measurement (41–50 bpm)")
         elif hr <= 90:
             stable_factors.append("Heart rate stable")
         elif hr <= 110:
             raw_score += 1
-            contributing_factors.append("Borderline tachycardia (HR 91–110 bpm)")
+            contributing_factors.append("Borderline elevated heart-rate measurement (91–110 bpm)")
         elif hr <= 130:
             raw_score += 2
-            contributing_factors.append("Tachycardia (HR 111–130 bpm)")
+            contributing_factors.append("Elevated heart-rate measurement (111–130 bpm)")
         else:
             raw_score += 3
-            contributing_factors.append("Severe tachycardia (HR > 130 bpm)")
+            contributing_factors.append("Very high heart-rate measurement (> 130 bpm)")
 
         # ── 2. SpO2 Evaluation ─────────────────────────────────────────────
         spo2 = vital.spo2
@@ -55,13 +55,13 @@ class BaselineRiskModel:
             pass  # No signal
         elif spo2 <= 91:
             raw_score += 3
-            contributing_factors.append("Severe hypoxemia (SpO2 ≤ 91%)")
+            contributing_factors.append("Low SpO2 measurement (≤ 91%)")
         elif spo2 <= 93:
             raw_score += 2
-            contributing_factors.append("Moderate hypoxemia (SpO2 92–93%)")
+            contributing_factors.append("Below-range SpO2 measurement (92–93%)")
         elif spo2 <= 95:
             raw_score += 1
-            contributing_factors.append("Borderline hypoxemia (SpO2 94–95%)")
+            contributing_factors.append("Borderline SpO2 measurement (94–95%)")
         else:
             stable_factors.append("SpO2 stable")
 
@@ -71,18 +71,18 @@ class BaselineRiskModel:
             pass  # No signal
         elif rr <= 8:
             raw_score += 3
-            contributing_factors.append("Severe bradypnea (RR ≤ 8 /min)")
+            contributing_factors.append("Low respiratory-rate measurement (≤ 8 /min)")
         elif rr <= 11:
             raw_score += 1
-            contributing_factors.append("Mild bradypnea (RR 9–11 /min)")
+            contributing_factors.append("Low respiratory-rate measurement (9–11 /min)")
         elif rr <= 20:
             stable_factors.append("Respiratory rate stable")
         elif rr <= 24:
             raw_score += 2
-            contributing_factors.append("Tachypnea (RR 21–24 /min)")
+            contributing_factors.append("Elevated respiratory-rate measurement (21–24 /min)")
         else:
             raw_score += 3
-            contributing_factors.append("Severe tachypnea / respiratory distress (RR ≥ 25 /min)")
+            contributing_factors.append("Very high respiratory-rate measurement (≥ 25 /min)")
 
         # ── 4. Signal Quality ───────────────────────────────────────────────
         sqi = vital.signal_quality
@@ -134,11 +134,39 @@ class BaselineRiskModel:
             risk_level=risk_level,
             confidence=round(sqi, 2),
             contributing_factors=contributing_factors,
-            anomalies=contributing_factors if contributing_factors else ["Normal cardiopulmonary function"],
+            anomalies=contributing_factors if contributing_factors else ["No active threshold findings in this reading"],
             recommendations=display_factors,
+            suggested_action=self._suggested_action(vital),
             hrv_metrics=hrv,
             signal_sqi=sqi
         )
+
+    @staticmethod
+    def _suggested_action(vital: VitalData) -> str:
+        findings = []
+        if 0 < vital.spo2 <= 88:
+            findings.append((100, "Very low SpO2 measurement; prompt clinical review recommended."))
+        elif 0 < vital.spo2 <= 91:
+            findings.append((70, "Low SpO2 measurement; clinical review recommended."))
+        elif 0 < vital.spo2 <= 95:
+            findings.append((20, "Borderline SpO2 measurement; review trend and repeat if indicated."))
+        if 0 < vital.heart_rate <= 40 or vital.heart_rate >= 140:
+            findings.append((90, "Very abnormal heart-rate measurement; prompt clinical review recommended."))
+        elif 0 < vital.heart_rate <= 50 or vital.heart_rate >= 130:
+            findings.append((60, "Abnormal heart-rate measurement; clinical review recommended."))
+        elif 51 <= vital.heart_rate < 60 or 90 < vital.heart_rate <= 110:
+            findings.append((25, "Borderline heart-rate measurement; review the trend."))
+        if 0 < vital.respiratory_rate <= 6 or vital.respiratory_rate >= 28:
+            findings.append((80, "Very abnormal respiratory-rate measurement; prompt clinical review recommended."))
+        elif 0 < vital.respiratory_rate <= 8 or vital.respiratory_rate >= 25:
+            findings.append((50, "Abnormal respiratory-rate measurement; clinical review recommended."))
+        elif 9 <= vital.respiratory_rate <= 11 or 20 < vital.respiratory_rate <= 24:
+            findings.append((30, "Borderline respiratory-rate measurement; review the trend."))
+        if findings:
+            return max(findings, key=lambda finding: finding[0])[1]
+        if vital.signal_quality < 0.2:
+            return "Check sensor contact and repeat the measurement before clinical interpretation."
+        return "Continue monitoring and review the trend; this baseline indication is not a diagnosis."
 
 
 risk_analyzer: RiskModel = BaselineRiskModel()

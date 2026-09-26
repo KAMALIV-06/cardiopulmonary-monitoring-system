@@ -42,6 +42,10 @@ The repository includes a previously used `backend/cardiopulmonary.db` SQLite fi
 
 The migration prints inserted, skipped, and failed counts for each table. Any error rolls back the whole PostgreSQL copy. The source SQLite file remains available as a backup.
 
+### Synthetic patient cohort
+
+After applying migrations, run `python scripts/seed_demo_dataset.py` from `backend/` to insert eight clearly marked synthetic demo profiles with medical history, medications, allergies, clinical measurements, lab results, events, historical dataset readings, and selected historical alerts. The script is idempotent and leaves existing patient IDs unchanged. All clinical context is marked as synthetic demo data and must not be represented as real patient information.
+
 ## Run locally (PowerShell)
 
 Backend:
@@ -53,6 +57,8 @@ python -m venv .venv
 pip install -r requirements.txt
 # Apply schema before starting FastAPI.
 alembic upgrade head
+# Optional: add the synthetic demo cohort for multi-patient screens.
+python scripts/seed_demo_dataset.py
 uvicorn app.main:app --reload --port 8000
 ```
 

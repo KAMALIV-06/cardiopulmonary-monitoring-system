@@ -34,6 +34,15 @@ Base URL: `http://localhost:8000/api/v1`
 | `POST` | `/alerts/{alert_id}/acknowledge` | Acknowledge alert |
 | `GET` | `/patients` | Patient list |
 | `GET` | `/patients/{patient_id}` | Patient details |
+| `GET` | `/patients/{patient_id}/profile` | Patient and clinical context in one response |
+| `GET` | `/patients/{patient_id}/clinical-history` | Medical history entries |
+| `GET` | `/patients/{patient_id}/medications` | Medication records |
+| `GET` | `/patients/{patient_id}/allergies` | Allergy records |
+| `GET` | `/patients/{patient_id}/clinical-measurements` | Recorded clinical measurements (for example, blood pressure, temperature, glucose) |
+| `GET` | `/patients/{patient_id}/labs` | Lab results and reference ranges |
+| `GET` | `/patients/{patient_id}/events` | Previous synthetic/clinical events |
+
+Clinical records are separate from sensor telemetry. Demo profiles and their clinical fields are explicitly marked `demo_data: true` and sourced as synthetic clinical records. Live `source` values for telemetry remain `hardware`, `simulator`, and `dataset`.
 
 ## Simulator control
 
@@ -47,6 +56,8 @@ Scenario keys: `normal`, `hypoxemia`, `tachycardia`, `bradycardia`, `tachypnea`,
 ## WebSocket
 
 Connect to `ws://localhost:8000/ws/vitals/{patient_id}`. The server sends `VITAL_UPDATE` packets containing `vital` (including `ppg_samples` and `source`), `risk` (`NORMAL` / `WATCH` / `HIGH_RISK`), and new `alerts`. The client may send `ping` and receives `pong`.
+
+All API timestamps represent UTC instants. Legacy naive timestamps are treated as UTC on response; clients should render them in the viewer's local timezone.
 
 ## Response and validation
 

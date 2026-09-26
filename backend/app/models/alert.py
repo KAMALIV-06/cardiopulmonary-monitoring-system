@@ -8,7 +8,8 @@ class ClinicalAlert(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     patient_id = Column(String(64), ForeignKey("patients.id"), nullable=False, index=True)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    vital_reading_id = Column(Integer, ForeignKey("vital_readings.id", ondelete="SET NULL"), nullable=True, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), index=True)
     alert_type = Column(String(64), nullable=False)   # e.g. HYPOXEMIA, TACHYCARDIA, TACHYPNEA, SENSOR_SIGNAL_LOW
     severity = Column(String(16), nullable=False)     # "INFO", "WATCH", "HIGH"
     message = Column(String(256), nullable=False)
@@ -16,6 +17,7 @@ class ClinicalAlert(Base):
     acknowledged = Column(Boolean, default=False)
     
     patient = relationship("Patient", back_populates="alerts")
+    vital_reading = relationship("VitalReading", back_populates="alerts")
 
     __table_args__ = (
         Index("idx_alert_patient_ack", "patient_id", "acknowledged"),

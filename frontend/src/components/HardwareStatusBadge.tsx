@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Cpu, Radio, ShieldCheck, Wifi, Layers } from 'lucide-react';
 import { VitalData } from '../types/vitals';
 
@@ -7,8 +7,15 @@ interface HardwareStatusBadgeProps {
 }
 
 export const HardwareStatusBadge: React.FC<HardwareStatusBadgeProps> = ({ vital }) => {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const source = vital?.source;
   const deviceId = vital?.device_id;
+  const hardwareFresh = source === 'hardware' && !!vital && now - new Date(vital.timestamp).getTime() < 15000;
+  const sourceLabel = source === 'hardware' ? hardwareFresh ? 'LIVE HARDWARE · ESP8266 + MAX30102' : 'HARDWARE · LAST PACKET STALE' : source === 'simulator' ? 'SIMULATOR' : source === 'dataset' ? 'DATASET REPLAY' : 'WAITING';
 
   return (
     <div className="p-4 rounded-2xl border border-slate-800 bg-[#0e1626] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -27,7 +34,7 @@ export const HardwareStatusBadge: React.FC<HardwareStatusBadgeProps> = ({ vital 
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs uppercase font-semibold tracking-wider text-slate-400">
-              Active Ingestion Source:
+              Most Recent Source:
             </span>
             <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded-md border ${
               source === 'hardware'
@@ -36,7 +43,7 @@ export const HardwareStatusBadge: React.FC<HardwareStatusBadgeProps> = ({ vital 
                 ? 'bg-purple-950/40 text-purple-400 border-purple-800/60'
                 : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60'
             }`}>
-              {source ?? 'waiting'}
+              {sourceLabel}
             </span>
           </div>
           <p className="text-xs font-mono text-slate-400 mt-0.5">

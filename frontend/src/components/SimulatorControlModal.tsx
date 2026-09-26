@@ -6,6 +6,7 @@ interface SimulatorControlModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentScenario: string;
+  patientId: string;
   onScenarioChange?: (newScenario: string) => void;
 }
 
@@ -15,7 +16,7 @@ const SCENARIOS = [
     title: 'Normal Sinus Rhythm',
     badge: 'Healthy Baseline',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    description: 'Resting healthy adult. Regular rhythm, SpO2 > 98%, HR ~72 bpm, RR 14.',
+    description: 'Synthetic baseline readings for interface testing. This scenario is not patient data.',
     metrics: 'HR 72 | SpO2 98% | RR 14'
   },
   {
@@ -23,7 +24,7 @@ const SCENARIOS = [
     title: 'Acute Hypoxemic Distress',
     badge: 'Critical Pulmonary',
     badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    description: 'Sudden desaturation (COPD / Pneumonia). Rapid shallow tachypnea. SpO2 drops below 90%.',
+    description: 'Synthetic low-SpO2 and elevated respiratory-rate test values; not a diagnosis.',
     metrics: 'HR 112 | SpO2 86% | RR 28'
   },
   {
@@ -31,7 +32,7 @@ const SCENARIOS = [
     title: 'Severe Tachycardia / Cardiac Stress',
     badge: 'High Cardiac Risk',
     badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    description: 'Excessive heart rate exceeding 140 bpm — elevated myocardial oxygen demand.',
+    description: 'Synthetic high heart-rate test values for checking early-warning behavior.',
     metrics: 'HR 148 | SpO2 94% | RR 22'
   },
   {
@@ -39,7 +40,7 @@ const SCENARIOS = [
     title: 'Severe Sinus Bradycardia',
     badge: 'Conduction Block',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    description: 'Pathologically low heart rate (< 40 bpm) with compensatory deep breathing.',
+    description: 'Synthetic low heart-rate test values for checking early-warning behavior.',
     metrics: 'HR 36 | SpO2 93% | RR 10'
   },
   {
@@ -47,7 +48,7 @@ const SCENARIOS = [
     title: 'Isolated Tachypnea',
     badge: 'Respiratory Fatigue',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    description: 'Rapid shallow breathing without primary hypoxemia — early respiratory fatigue or anxiety.',
+    description: 'Synthetic high respiratory-rate values; respiratory rate is simulated in this scenario.',
     metrics: 'HR 88 | SpO2 95% | RR 30'
   },
   {
@@ -63,7 +64,7 @@ const SCENARIOS = [
     title: 'Optical Sensor Disconnect',
     badge: 'Sensor Unavailable',
     badgeColor: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
-    description: 'Electrode detached from skin — simulates 50/60Hz ambient interference and critical SQI.',
+    description: 'Optical sensor contact is interrupted; the scenario produces a low-quality PPG signal.',
     metrics: 'Flatline / 60Hz Hum • SQI < 0.1'
   }
 ];
@@ -73,6 +74,7 @@ export const SimulatorControlModal: React.FC<SimulatorControlModalProps> = ({
   isOpen,
   onClose,
   currentScenario,
+  patientId,
   onScenarioChange
 }) => {
   const [selected, setSelected] = useState(currentScenario);
@@ -83,7 +85,7 @@ export const SimulatorControlModal: React.FC<SimulatorControlModalProps> = ({
   const handleSelectScenario = async (id: string) => {
     setIsLoading(true);
     try {
-      await setSimulatorScenario(id, 'PATIENT-001');
+      await setSimulatorScenario(id, patientId);
       setSelected(id);
       if (onScenarioChange) onScenarioChange(id);
     } catch (e) {
@@ -94,6 +96,7 @@ export const SimulatorControlModal: React.FC<SimulatorControlModalProps> = ({
   };
 
   const handleStart = async () => {
+    await setSimulatorScenario(currentScenario, patientId);
     await startSimulator();
   };
 

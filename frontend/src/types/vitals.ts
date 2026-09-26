@@ -22,6 +22,7 @@ export interface RiskAnalysisResult {
   contributing_factors: string[];
   anomalies: string[];
   recommendations: string[];  // Contains the formatted "✓ stable" / "⚠ issue" strings
+  suggested_action?: string;
   hrv_metrics?: {
     mean_rr?: number;
     sdnn?: number;
@@ -38,6 +39,7 @@ export interface ClinicalAlert {
   message: string;
   timestamp: string;
   acknowledged: boolean;
+  vital_reading_id?: number | null;
 }
 
 export interface TelemetryPacket {

@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'monitoring', label: 'Live Monitoring', icon: Activity },
   { id: 'patients', label: 'Patients', icon: Users },
+  { id: 'clinical', label: 'Clinical Profile', icon: FileText },
   { id: 'trends', label: 'Trends', icon: TrendingUp },
   { id: 'alerts', label: 'Alerts', icon: Bell },
   { id: 'devices', label: 'Devices', icon: Cpu },

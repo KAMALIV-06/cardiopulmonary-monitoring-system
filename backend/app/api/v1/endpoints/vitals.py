@@ -55,11 +55,13 @@ async def process_and_persist_vital(vital: VitalData, db: AsyncSession) -> dict:
     if not patient:
         patient = Patient(
             id=vital.patient_id,
-            name="Default Patient",
+            name="Unregistered monitoring patient",
             age=45,
             gender="Unspecified",
             medical_record_number=f"MRN-{vital.patient_id}",
-            baseline_notes="Auto-provisioned placeholder; no patient history supplied."
+            baseline_notes="Automatically created from telemetry; clinical profile requires verification.",
+            monitoring_status="active",
+            demo_data=False,
         )
         db.add(patient)
         await db.commit()
@@ -98,7 +100,7 @@ async def process_and_persist_vital(vital: VitalData, db: AsyncSession) -> dict:
     await db.refresh(db_vital)
 
     # 5. Evaluate and emit clinical alerts
-    new_alerts = await alert_service.evaluate_and_create_alerts(vital, risk_result, db)
+    new_alerts = await alert_service.evaluate_and_create_alerts(vital, risk_result, db, db_vital.id)
 
     # 6. Real-time WebSocket Broadcast
     broadcast_payload = {
@@ -111,7 +113,8 @@ async def process_and_persist_vital(vital: VitalData, db: AsyncSession) -> dict:
                 "type": a.alert_type,
                 "severity": a.severity,
                 "message": a.message,
-                "timestamp": a.timestamp.isoformat(),
+                "timestamp": a.timestamp.replace(tzinfo=datetime.timezone.utc).isoformat(),
+                "vital_reading_id": a.vital_reading_id,
                 "acknowledged": a.acknowledged
             }
             for a in new_alerts
@@ -176,7 +179,7 @@ async def get_latest_vital(
 async def get_vital_history(
     patient_id: str,
     limit: int = Query(default=60, ge=1, le=10000),
-    window_minutes: Optional[int] = Query(default=None, ge=1, le=60),
+    window_minutes: Optional[int] = Query(default=None, ge=1, le=10080),
     db: AsyncSession = Depends(get_db)
 ):
     """Retrieve historical vital readings for charting."""
@@ -187,7 +190,7 @@ async def get_vital_history(
         .limit(limit)
     )
     if window_minutes is not None:
-        cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=window_minutes)
+        cutoff = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) - datetime.timedelta(minutes=window_minutes)
         query = query.where(VitalReading.timestamp >= cutoff)
     result = await db.execute(query)
     records = result.scalars().all()

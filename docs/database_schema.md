@@ -8,13 +8,15 @@ PostgreSQL is required for the application. SQLAlchemy async models define metad
 - **devices:** ID, type/source, optional MAC, status, last seen.
 - **vital_readings:** primary ID, patient/device foreign keys, timestamp, HR, SpO₂, RR, `ppg_samples_json`, signal quality, source, risk score, risk level, and nullable `legacy_ecg_samples_json` archive.
 - **clinical_alerts:** primary ID, patient foreign key, timestamp, alert type, severity, message, trigger value, acknowledged flag.
+- **medical_history, medications, allergies, clinical_measurements, lab_results, patient_events:** additive patient-linked clinical context. Demo cohort rows are synthetic and explicitly marked on the patient.
 
 New telemetry uses PPG. Legacy waveform values are preserved as legacy data only, never interpreted as PPG. The relationships and patient/timestamp and patient/acknowledgement indexes are created by Alembic.
 
 ## Alembic revisions
 
 - `20260925_01`: initial schema matching the pre-PPG deployment (including the old waveform column).
-- `20260925_02` (**head**): add `ppg_samples_json`, rename the old waveform column to `legacy_ecg_samples_json`, and make the legacy field nullable.
+- `20260925_02`: add `ppg_samples_json`, rename the old waveform column to `legacy_ecg_samples_json`, and make the legacy field nullable.
+- `20260926_03` (**head**): add patient demographics/status fields, clinical context tables, and an optional link from alerts to the triggering vital reading. Existing patient, device, vital, and alert rows are retained.
 
 Fresh database:
 
@@ -22,6 +24,14 @@ Fresh database:
 cd backend
 alembic upgrade head
 ```
+
+To populate the patient-centric screens with eight synthetic-only records after migration:
+
+```powershell
+python scripts/seed_demo_dataset.py
+```
+
+The seed command is idempotent and does not overwrite existing patient IDs.
 
 For an existing original schema created before Alembic, first verify that its tables and old waveform column match revision 01, then adopt and upgrade:
 

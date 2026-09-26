@@ -24,16 +24,18 @@ class AlertService:
         self._cooldown_seconds = 20  # Minimum seconds between same-type alerts per patient
         # Track consecutive abnormal readings for persistence detection
         self._abnormal_count: Dict[tuple, int] = {}
+        self._active_severity: Dict[tuple, str] = {}
         self._PERSISTENCE_THRESHOLD = 2  # Require 2+ consecutive abnormal readings
 
     async def evaluate_and_create_alerts(
         self,
         vital: VitalData,
         risk: RiskAnalysisResult,
-        db: AsyncSession
+        db: AsyncSession,
+        vital_reading_id: Optional[int] = None,
     ) -> List[ClinicalAlert]:
         alerts_to_create: List[AlertCreate] = []
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
         # ── SpO2 / Hypoxemia ────────────────────────────────────────────────
         if vital.spo2 > 0:
@@ -43,7 +45,7 @@ class AlertService:
                     patient_id=vital.patient_id,
                     alert_type="HYPOXEMIA",
                     severity=severity,
-                    message=f"Low SpO2 detected: {vital.spo2}% — possible hypoxemia",
+                    message=f"Abnormal low SpO2 measurement: {vital.spo2}% — clinical review recommended.",
                     trigger_value=vital.spo2
                 ))
             elif vital.spo2 <= 94.0:
@@ -63,7 +65,7 @@ class AlertService:
                     patient_id=vital.patient_id,
                     alert_type="TACHYCARDIA",
                     severity=severity,
-                    message=f"Elevated heart rate: {vital.heart_rate} bpm — possible tachycardia",
+                    message=f"Abnormal elevated heart-rate measurement: {vital.heart_rate} bpm — clinical review recommended.",
                     trigger_value=vital.heart_rate
                 ))
             elif vital.heart_rate <= 45.0:
@@ -71,7 +73,7 @@ class AlertService:
                     patient_id=vital.patient_id,
                     alert_type="BRADYCARDIA",
                     severity="HIGH",
-                    message=f"Low heart rate: {vital.heart_rate} bpm — possible bradycardia",
+                    message=f"Abnormal low heart-rate measurement: {vital.heart_rate} bpm — clinical review recommended.",
                     trigger_value=vital.heart_rate
                 ))
 
@@ -82,7 +84,7 @@ class AlertService:
                     patient_id=vital.patient_id,
                     alert_type="TACHYPNEA",
                     severity="HIGH",
-                    message=f"Elevated respiratory rate: {vital.respiratory_rate} /min — possible respiratory distress",
+                    message=f"Abnormal elevated respiratory-rate measurement: {vital.respiratory_rate} /min — clinical review recommended.",
                     trigger_value=vital.respiratory_rate
                 ))
             elif vital.respiratory_rate >= 22.0:
@@ -114,6 +116,7 @@ class AlertService:
 
         # ── Create alerts with cooldown and persistence filtering ───────────
         created_alerts: List[ClinicalAlert] = []
+        severity_rank = {"INFO": 0, "WATCH": 1, "HIGH": 2}
         for alert_data in alerts_to_create:
             key = (alert_data.patient_id, alert_data.alert_type)
 
@@ -122,9 +125,13 @@ class AlertService:
             if self._abnormal_count[key] < self._PERSISTENCE_THRESHOLD:
                 continue  # Not yet persistent — wait for next reading
 
+            previous_severity = self._active_severity.get(key)
+            if previous_severity and severity_rank[alert_data.severity] <= severity_rank[previous_severity]:
+                continue  # Same state is already active; emit only on escalation.
+
             # Cooldown: don't spam the same alert
             last_time = self._last_alert_time.get(key)
-            if last_time and (now - last_time).total_seconds() < self._cooldown_seconds:
+            if not previous_severity and last_time and (now - last_time).total_seconds() < self._cooldown_seconds:
                 continue
 
             self._last_alert_time[key] = now
@@ -135,10 +142,12 @@ class AlertService:
                 severity=alert_data.severity,
                 message=alert_data.message,
                 trigger_value=alert_data.trigger_value,
+                vital_reading_id=vital_reading_id,
                 acknowledged=False
             )
             db.add(db_alert)
             created_alerts.append(db_alert)
+            self._active_severity[key] = alert_data.severity
             logger.warning(
                 f"ALERT [{alert_data.severity}] {vital.patient_id}: {alert_data.message}"
             )
@@ -148,6 +157,7 @@ class AlertService:
         keys_to_reset = [k for k in self._abnormal_count if k not in triggered_types and k[0] == vital.patient_id]
         for k in keys_to_reset:
             self._abnormal_count[k] = 0
+            self._active_severity.pop(k, None)
 
         if created_alerts:
             await db.commit()

@@ -1,6 +1,19 @@
 import { VitalData, SimulatorStatus, ClinicalAlert } from '../types/vitals';
+import type { Patient, PatientProfile } from '../types/patient';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+
+export async function fetchPatients(): Promise<Patient[]> {
+  const res = await fetch(`${API_BASE}/patients`);
+  if (!res.ok) throw new Error('Failed to load patients');
+  return res.json();
+}
+
+export async function fetchPatientProfile(patientId: string): Promise<PatientProfile> {
+  const res = await fetch(`${API_BASE}/patients/${encodeURIComponent(patientId)}/profile`);
+  if (!res.ok) throw new Error('Failed to load patient clinical profile');
+  return res.json();
+}
 
 export async function fetchLatestVital(patientId: string = 'PATIENT-001') {
   const res = await fetch(`${API_BASE}/vitals/${patientId}/latest`);

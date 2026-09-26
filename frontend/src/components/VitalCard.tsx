@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Wind, Droplets, ArrowUpRight, ArrowDownRight, AlertTriangle } from 'lucide-react';
+import type { VitalSource } from '../types/vitals';
 
 interface VitalCardProps {
   type: 'hr' | 'spo2' | 'rr';
@@ -10,6 +11,7 @@ interface VitalCardProps {
   isCritical?: boolean;
   statusText?: string;
   normalRange: string;
+  source?: VitalSource;
 }
 
 export const VitalCard: React.FC<VitalCardProps> = ({
@@ -21,6 +23,7 @@ export const VitalCard: React.FC<VitalCardProps> = ({
   isCritical = false,
   statusText = 'Normal',
   normalRange,
+  source,
 }) => {
   // Theme styling based on vital type
   const theme = {
@@ -89,8 +92,8 @@ export const VitalCard: React.FC<VitalCardProps> = ({
 
       {/* Bottom Subtext */}
       <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
-        <span>Continuous Real-time</span>
-        <span className="font-mono text-[11px] text-slate-500">Live Window</span>
+        <span>Source</span>
+        <span className="font-mono text-[11px] text-slate-300">{source === 'hardware' ? 'LIVE HARDWARE' : source === 'simulator' ? 'SIMULATOR' : source === 'dataset' ? 'DATASET REPLAY' : 'WAITING'}</span>
       </div>
     </div>
   );

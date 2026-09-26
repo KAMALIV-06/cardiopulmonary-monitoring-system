@@ -13,7 +13,7 @@ class DatasetAdapter(BaseDataSourceAdapter):
         return VitalData(
             patient_id=str(raw_payload.get("patient_id", "DATASET-SUBJECT-01")),
             device_id=str(raw_payload.get("device_id", "PHYSIONET-REPLAY")),
-            timestamp=raw_payload.get("timestamp") or datetime.datetime.utcnow(),
+            timestamp=raw_payload.get("timestamp") or datetime.datetime.now(datetime.timezone.utc),
             heart_rate=float(raw_payload["heart_rate"]),
             spo2=float(raw_payload["spo2"]),
             respiratory_rate=float(raw_payload["respiratory_rate"]),
