@@ -30,7 +30,7 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({ vital, isConnected, on
         <div><dt className="text-slate-500">Source</dt><dd className="mt-1 text-white">{sourceLabel}</dd></div>
         <div><dt className="text-slate-500">Device reporting</dt><dd className="mt-1 text-white">{fresh ? vital?.source === 'hardware' ? 'Recent hardware packet' : `Recent ${sourceLabel.toLowerCase()} data` : isConnected ? 'WebSocket online · awaiting fresh data' : 'No recent data'}</dd></div>
         <div><dt className="text-slate-500">Last seen</dt><dd className="mt-1 text-white">{lastSeen ? lastSeen.toLocaleString() : 'No reading yet'}</dd></div>
-        <div><dt className="text-slate-500">Signal quality</dt><dd className="mt-1 text-white">{vital ? `${(vital.signal_quality * 100).toFixed(0)}%` : 'No data'}</dd></div>
+        <div><dt className="text-slate-500">Signal quality</dt><dd className="mt-1 text-white">Not available</dd></div>
       </dl>
       <div className="mt-6 flex flex-wrap gap-3">
         <button onClick={onOpenSimulator} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm text-white">Demo scenarios</button>

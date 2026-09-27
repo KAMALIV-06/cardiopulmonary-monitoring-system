@@ -44,10 +44,9 @@ export const App: React.FC = () => {
   const hr = currentVital?.heart_rate ?? 0;
   const spo2 = currentVital?.spo2 ?? 0;
   const rr = currentVital?.respiratory_rate ?? 0;
-  const sqi = currentVital?.signal_quality ?? 0;
   const source = currentVital?.source;
 
-  const sourceLabel = source === 'hardware' ? 'HARDWARE · ESP8266 + MAX30102'
+  const sourceLabel = source === 'hardware' ? 'LIVE HARDWARE · ESP8266 + MAX30102'
     : source === 'simulator' ? 'SIMULATOR · Scenario data'
       : source === 'dataset' ? 'DATASET REPLAY · Historical synthetic readings' : 'WAITING FOR DATA';
   const getHrStatus = () => hr === 0 ? 'Unavailable' : hr > 130 ? 'Very high measurement' : hr > 100 ? 'Elevated measurement' : hr <= 40 ? 'Very low measurement' : hr < 50 ? 'Low measurement' : 'Within configured range';
@@ -66,7 +65,7 @@ export const App: React.FC = () => {
         return <div className="space-y-6">
           <header><h2 className="text-xl font-bold text-white">Live Monitoring</h2><p className="mt-1 text-sm text-slate-400">Real-time signal, device health, and source-labelled telemetry for {patientId}.</p></header>
           <HardwareStatusBadge vital={currentVital}/>
-          <PpgWaveformCanvas ppgBuffer={ppgBuffer} signalQuality={sqi} height={260}/>
+          <PpgWaveformCanvas ppgBuffer={ppgBuffer} height={260}/>
           {cards}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-xs text-slate-300"><span>Source: {sourceLabel}</span><span>Last update: {currentVital ? new Date(currentVital.timestamp).toLocaleString() : 'Waiting for telemetry'}</span><span>WebSocket: {isConnected ? 'Connected' : 'Reconnecting'}</span></div>
           <p className="text-xs text-slate-500">MAX30102 provides optical PPG with device-calculated heart rate and SpO₂ estimates. Respiratory rate is derived from sufficiently long PPG windows; it is not a direct sensor measurement. Transparent baseline risk indication — not a diagnosis.</p>

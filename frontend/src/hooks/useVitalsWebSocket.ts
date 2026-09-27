@@ -35,6 +35,7 @@ export function useVitalsWebSocket({
 
     ws.onmessage = (event) => {
       if (wsRef.current !== ws) return;
+      if (event.data === 'pong') return;
       try {
         const packet: TelemetryPacket = JSON.parse(event.data);
         if (packet.type === 'VITAL_UPDATE') {
@@ -50,7 +51,7 @@ export function useVitalsWebSocket({
             });
           }
 
-          if (packet.vital.ppg_samples && packet.vital.ppg_samples.length > 0) {
+          if (packet.vital.ppg_samples?.length) {
             setPpgBuffer((prev) => {
               const updated = [...prev, ...packet.vital.ppg_samples];
               if (updated.length > maxPpgPoints) {
@@ -58,6 +59,9 @@ export function useVitalsWebSocket({
               }
               return updated;
             });
+          } else {
+            // Empty packets mean this update contains no raw waveform to display.
+            setPpgBuffer([]);
           }
         }
       } catch (err) {

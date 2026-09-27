@@ -2,13 +2,11 @@ import React, { useEffect, useRef } from 'react';
 
 interface PpgWaveformCanvasProps {
   ppgBuffer: number[];
-  signalQuality: number;
   height?: number;
 }
 
 export const PpgWaveformCanvas: React.FC<PpgWaveformCanvasProps> = ({
   ppgBuffer,
-  signalQuality,
   height = 200
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -19,7 +17,7 @@ export const PpgWaveformCanvas: React.FC<PpgWaveformCanvasProps> = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || ppgBuffer.length === 0) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -90,8 +88,8 @@ export const PpgWaveformCanvas: React.FC<PpgWaveformCanvasProps> = ({
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.shadowBlur = 8;
-      ctx.shadowColor = signalQuality < 0.2 ? '#ef4444' : '#10b981';
-      ctx.strokeStyle = signalQuality < 0.2 ? '#f87171' : '#34d399';
+      ctx.shadowColor = '#10b981';
+      ctx.strokeStyle = '#34d399';
 
       const points = historyRef.current;
       if (points.length > 1) {
@@ -116,7 +114,7 @@ export const PpgWaveformCanvas: React.FC<PpgWaveformCanvasProps> = ({
       ctx.shadowBlur = 0;
 
       // Draw sweep cursor vertical glow bar
-      ctx.fillStyle = signalQuality < 0.2 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
       ctx.fillRect(currentX, 0, 2, height);
 
       // Increment sweep cursor
@@ -136,7 +134,24 @@ export const PpgWaveformCanvas: React.FC<PpgWaveformCanvasProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [ppgBuffer, signalQuality, height]);
+  }, [ppgBuffer, height]);
+
+  if (ppgBuffer.length === 0) {
+    return (
+      <div className="flex flex-col justify-between rounded-2xl border border-slate-800 bg-[#070d14] p-5 shadow-2xl" style={{ minHeight: height }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="rounded-md border border-slate-700 bg-slate-900/60 px-2.5 py-1 font-mono text-xs font-bold tracking-widest text-slate-300">
+            MAX30102 · PPG
+          </span>
+          <span className="text-xs text-slate-400">Signal quality: Not available</span>
+        </div>
+        <div className="py-8 text-center">
+          <p className="text-sm font-semibold text-slate-200">PPG waveform unavailable</p>
+          <p className="mt-2 text-xs text-slate-400">Raw PPG samples are not currently transmitted by this device.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative rounded-2xl border border-slate-800 bg-[#070d14] overflow-hidden shadow-2xl">
@@ -146,16 +161,7 @@ export const PpgWaveformCanvas: React.FC<PpgWaveformCanvasProps> = ({
           MAX30102 - PPG
         </span>
         <span className="text-[11px] font-mono text-slate-400">
-          PPG waveform - 50 Hz samples
-        </span>
-      </div>
-
-      <div className="absolute top-3 right-4 z-10 flex items-center gap-2">
-        <span className="text-[11px] text-slate-400">SQI:</span>
-        <span className={`text-xs font-mono font-bold ${
-          signalQuality >= 0.8 ? 'text-emerald-400' : signalQuality >= 0.4 ? 'text-amber-400' : 'text-rose-400'
-        }`}>
-          {(signalQuality * 100).toFixed(0)}%
+          Raw PPG waveform samples
         </span>
       </div>
 

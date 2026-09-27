@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Cpu, Radio, ShieldCheck, Wifi, Layers } from 'lucide-react';
+import { Cpu, Radio, Layers } from 'lucide-react';
 import { VitalData } from '../types/vitals';
 
 interface HardwareStatusBadgeProps {
@@ -60,13 +60,8 @@ export const HardwareStatusBadge: React.FC<HardwareStatusBadgeProps> = ({ vital 
         </div>
 
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-          <Wifi className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="text-slate-400">Signal Integrity:</span>
-          <span className={`font-mono font-bold ${
-            !vital ? 'text-slate-500' : vital.signal_quality >= 0.8 ? 'text-emerald-400' : vital.signal_quality >= 0.4 ? 'text-amber-400' : 'text-rose-400'
-          }`}>
-            {vital ? `${(vital.signal_quality * 100).toFixed(0)}% SQI` : 'Waiting'}
-          </span>
+          <span className="text-slate-400">Signal quality:</span>
+          <span className="font-mono font-bold text-slate-300">Not available</span>
         </div>
       </div>
     </div>
